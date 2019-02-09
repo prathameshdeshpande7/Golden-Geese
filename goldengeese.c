@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+int geese_found_count = 0;
+int count_move_no = 0;
 /************************************************************
 
 For this contest, you have to modify the code of the robot_xxx functions
@@ -69,6 +71,12 @@ void grid_new_location(struct Grid *grid, int x, int y, int move_direction,
 
 // You can modify anything in this part of the code as necessary
 // You can add more classes, functions, data structures
+struct Goose {
+  int goose_x;
+  int goose_y;
+  int goose_quality;
+  int goose_visited_no;
+};
 
 struct Robot {
   struct Grid *grid;
@@ -76,6 +84,7 @@ struct Robot {
   int y;
   int horiz_direction;
   int vert_direction;
+  struct Goose *goose_info;
   // Feel free to modify this struct as required
 };
 
@@ -90,11 +99,13 @@ void robot_initialize(struct Robot *robot, struct Grid *grid) {
    *   
    * Feel free to modify this method as required
    */
+  int i;
   robot->grid = grid;
   robot->x = 0;                 // current x position of robot
   robot->y = 0;                  // current y position of robot
   robot->horiz_direction = grid->RIGHT;
   robot->vert_direction = grid->UP;
+  robot->goose_info = malloc(robot->grid->num_geese*sizeof(struct Goose));
 }
 
 int robot_move(struct Robot *robot) {
@@ -121,13 +132,19 @@ int robot_move(struct Robot *robot) {
    * automatically deduced by your robot based on when robot_got_egg is called
    */
   int newx, newy;
-  
+
+  /* scan entire grid once, go RIGHT till reached edge,
+   * then one step UP, then reverse direction,
+   * go LEFT till reached edge, go UP, reverse direction
+   * and so on till we complete MN moves
+   */  
   grid_new_location(robot->grid, robot->x, robot->y,
                     robot->horiz_direction, &newx, &newy);
   if (grid_is_valid_location(robot->grid, newx, newy)) {
     // continue moving in the current horiz_direction
     robot->x = newx;
     robot->y = newy;
+    count_move_no++;
     return robot->horiz_direction;
   } else {
     // we have reached an edge.
@@ -135,41 +152,16 @@ int robot_move(struct Robot *robot) {
     robot->horiz_direction = robot->horiz_direction == robot->grid->RIGHT ?
       robot->grid->LEFT : robot->grid->RIGHT;
 
-    // before starting moving in horiz_direction
-    // we will try moving up (or down if that fails)
-
-    // move in the vert_direction
+    // go UP one step
     grid_new_location(robot->grid, robot->x, robot->y,
                       robot->vert_direction, &newx, &newy);
-    if (!grid_is_valid_location(robot->grid, newx, newy)) {
-      // cant move
-      // need to change vertical direction
-      robot->vert_direction = robot->vert_direction == robot->grid->DOWN ?
-        robot->grid->UP : robot->grid->DOWN;
+    if (grid_is_valid_location(robot->grid, newx, newy)) {
+        // continue moving in the current horiz_direction
+        robot->x = newx;
+        robot->y = newy;
+        count_move_no++;
+        return robot->vert_direction;
     }
-
-    // check if we can move in the new vert_direction
-    grid_new_location(robot->grid, robot->x, robot->y,
-                      robot->vert_direction, &newx, &newy);
-    if (!grid_is_valid_location(robot->grid, newx, newy)) {
-      // both vertical movements are illegal
-      //this means that grid->cols is 1
-      // we just keep moving left-right-left with
-      // no vertical motion
-      grid_new_location(robot->grid, robot->x, robot->y,
-                        robot->horiz_direction,
-                        &newx, &newy);
-      robot->x = newx;
-      robot->y = newy;
-      return robot->horiz_direction;
-    }
-
-    // if we come here, we have successfully changed the
-    // vert_direction
-    // move vertically in the new vert_direction
-    robot->x = newx;
-    robot->y = newy;
-    return robot->vert_direction;
   }
   return -1;
 }
@@ -184,6 +176,23 @@ void robot_got_egg(struct Robot *robot, int x, int y, int value) {
    * high value goose, you might consider returning here; but make
    * sure to not return before 10 steps.
    */
+
+   /* Save the goose information in Goose structure
+    * x, y, value and the overall move number we took
+    * to reach this goose
+    */
+   robot->goose_info[geese_found_count].goose_x = x;
+   robot->goose_info[geese_found_count].goose_y = y;
+   robot->goose_info[geese_found_count].goose_quality = value;
+   robot->goose_info[geese_found_count].goose_visited_no = count_move_no;
+   printf("GOOSE #%d: x: %d, y: %d, quality: %d, visited_move: %d\n", geese_found_count+1,
+        robot->goose_info[geese_found_count].goose_x,
+        robot->goose_info[geese_found_count].goose_y,
+        robot->goose_info[geese_found_count].goose_quality,
+        robot->goose_info[geese_found_count].goose_visited_no);
+   geese_found_count++;
+   printf("%d, %d: [%d]\n",
+            x, y, value);
 }
 
 /***************************************************************
