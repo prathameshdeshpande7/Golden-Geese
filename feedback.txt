@@ -1,0 +1,11 @@
+Your solution is correct. Solution quality is Below_Average. Feedback for your solution:
+
+Your score is 62. Your performance can be improved in these tests:
+
+2x10 grid with single goose at beginning
+Large 99x99 grid 0th column 9s rest 1s
+Large 98x98 grid 0th row 9s rest 1s
+2x20 grid with single goose at end
+20x20 grid with single goose in the middle
+
+Even the trivial default program gets a score of 60+. You can do better
