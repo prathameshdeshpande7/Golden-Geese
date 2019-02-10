@@ -326,46 +326,53 @@ int robot_scan_grid(struct Robot *robot) {
     int valid_move = -1;
     int ret = 0;
 
-    if (geese_found_count == robot->grid->num_geese) {
-        /* We have found all the geese in the scan.
-        * Now, stop scanning and start calculating
-        * Manhattan Distance of the current location
-        * to all Geese locations.
-        */
-        robot->curr_state = ROBOT_CALC_MH_DIST;
-        robot_calc_mh_dist(robot);
-
-#if 0
-        if (robot->curr_state == ROBOT_TRAVERSE) {
-            ret = robot_traverse(robot);
-        } else if (robot->curr_state == ROBOT_REROUTING) {
-            ret = robot_reroute(robot);
-        }
-#endif
+    if (robot->grid->num_geese == 0) {
+        robot->step_count_x = robot->grid->rows;
+        robot->step_count_y = robot->grid->cols;
         ret = robot_traverse(robot);
-        printf("Found ALL :%d %d\n", geese_found_count, robot->count_move_no);
         return ret;
-
     } else {
-        /* scan entire grid once, go RIGHT till reached edge,
-         * then one step UP, then reverse direction,
-         * go LEFT till reached edge, go UP, reverse direction
-         * and so on till we complete MN moves
-         */  
-        valid_move = validate_move_location(robot, robot->horiz_direction);
-        if (valid_move != -1) {
-            // continue moving in the current horiz_direction
-            return robot->horiz_direction;
-        } else {
-            // we have reached an edge.
-            // reverse the horiz_direction
-            robot->horiz_direction = robot->horiz_direction == robot->grid->RIGHT ?
-              robot->grid->LEFT : robot->grid->RIGHT;
+        if (geese_found_count == robot->grid->num_geese) {
+            /* We have found all the geese in the scan.
+            * Now, stop scanning and start calculating
+            * Manhattan Distance of the current location
+            * to all Geese locations.
+            */
+            robot->curr_state = ROBOT_CALC_MH_DIST;
+            robot_calc_mh_dist(robot);
 
-            // go UP one step
-            valid_move = validate_move_location(robot, robot->vert_direction);
+    #if 0
+            if (robot->curr_state == ROBOT_TRAVERSE) {
+                ret = robot_traverse(robot);
+            } else if (robot->curr_state == ROBOT_REROUTING) {
+                ret = robot_reroute(robot);
+            }
+    #endif
+            ret = robot_traverse(robot);
+            printf("Found ALL :%d %d\n", geese_found_count, robot->count_move_no);
+            return ret;
+
+        } else {
+            /* scan entire grid once, go RIGHT till reached edge,
+             * then one step UP, then reverse direction,
+             * go LEFT till reached edge, go UP, reverse direction
+             * and so on till we complete MN moves
+             */  
+            valid_move = validate_move_location(robot, robot->horiz_direction);
             if (valid_move != -1) {
-                return robot->vert_direction;
+                // continue moving in the current horiz_direction
+                return robot->horiz_direction;
+            } else {
+                // we have reached an edge.
+                // reverse the horiz_direction
+                robot->horiz_direction = robot->horiz_direction == robot->grid->RIGHT ?
+                  robot->grid->LEFT : robot->grid->RIGHT;
+
+                // go UP one step
+                valid_move = validate_move_location(robot, robot->vert_direction);
+                if (valid_move != -1) {
+                    return robot->vert_direction;
+                }
             }
         }
     }
