@@ -1,11 +1,10 @@
-Your solution is correct. Solution quality is Below_Average. Feedback for your solution:
+Your solution is correct. Solution quality is Satisfactory. Feedback for your solution:
 
-Your score is 62. Your performance can be improved in these tests:
+Your score is 67. There were errors in these tests:
 
-2x10 grid with single goose at beginning
 Large 99x99 grid 0th column 9s rest 1s
 Large 98x98 grid 0th row 9s rest 1s
-2x20 grid with single goose at end
-20x20 grid with single goose in the middle
+Error details:
 
-Even the trivial default program gets a score of 60+. You can do better
+Program crashed (2 tests)
+You must score above 75 to get to the next level
