@@ -144,8 +144,13 @@ int goose_exists(struct Robot *robot, int newx, int newy) {
         if ((newx == robot->goose_info[i].goose_x &&
              newy == robot->goose_info[i].goose_y) &&
              robot->next_egg_alive_in > 1) {
-            // egg exists at this location
-            return 1;
+            if (robot->goose_info[i].goose_quality == 1) {
+                // go over this egg of low quality
+                return 0;
+            } else {
+                // egg exists at this location
+                return 1;
+            }
         }
     }
     return 0;
@@ -330,6 +335,7 @@ int robot_scan_grid(struct Robot *robot) {
         robot->step_count_x = robot->grid->rows;
         robot->step_count_y = robot->grid->cols;
         ret = robot_traverse(robot);
+        printf("ZERO ***\n");
         return ret;
     } else {
         if (geese_found_count == robot->grid->num_geese) {
@@ -349,7 +355,7 @@ int robot_scan_grid(struct Robot *robot) {
             }
     #endif
             ret = robot_traverse(robot);
-            printf("Found ALL :%d %d\n", geese_found_count, robot->count_move_no);
+            printf("Found ALL :%d %d, ret %d\n", geese_found_count, robot->count_move_no, ret);
             return ret;
 
         } else {
