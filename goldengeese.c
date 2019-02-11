@@ -142,9 +142,10 @@ int goose_exists(struct Robot *robot, int newx, int newy) {
     int i;
 
     for (i = 0; i < robot->grid->num_geese; i++) {
-        if ((newx == robot->goose_info[i].goose_x &&
-             newy == robot->goose_info[i].goose_y) &&
-             robot->next_egg_alive_in <= 1) {
+        if ((newx == robot->goose_info[i].goose_x) &&
+            (newy == robot->goose_info[i].goose_y) &&
+            (robot->next_egg_alive_in <= 1)) {
+            printf("NEXT ALIVE %d, newx %d, newy %d\n", robot->next_egg_alive_in, newx, newy);
             if (robot->goose_info[i].goose_quality == 1) {
                 // go over this egg of low quality
                 return 0;
@@ -162,7 +163,6 @@ int validate_move_location(struct Robot *robot, int move_direction) {
     int newx, newy;
     grid_new_location(robot->grid, robot->x, robot->y,
                       move_direction, &newx, &newy);
-    printf("VALID **** %d, %d\n", newx, newy);
     if (grid_is_valid_location(robot->grid, newx, newy)) {
         if (robot->curr_state == ROBOT_REROUTING &&
             goose_exists(robot, newx, newy)) {
@@ -173,36 +173,17 @@ int validate_move_location(struct Robot *robot, int move_direction) {
         }
         robot->x = newx;
         robot->y = newy;
+        printf("VALID **** %d, %d, state %d\n", newx, newy, robot->curr_state);
         robot->count_move_no++;
         return move_direction;
     }
+    printf("INVALID ****  %d, %d,\n", newx, newy);
     return -1;
-}
-
-int robot_reroute(struct Robot *robot) {
-    int valid_move = -1;
-
-    if (robot->step_count_x) {
-        valid_move = validate_move_location(robot, robot->horiz_direction);
-        if (valid_move != -1) {
-            robot->step_count_x--;
-            printf("TRAVERSE HORIZ %d, step_count_x %d\n", robot->horiz_direction, robot->step_count_x);
-            return robot->horiz_direction;
-        } else {
-            // reverse the horiz_direction
-            robot->horiz_direction = robot->horiz_direction == robot->grid->RIGHT ?
-              robot->grid->LEFT : robot->grid->RIGHT;
-            printf("Traverse candidate hori %d, vert %d\n", robot->horiz_direction, robot->vert_direction);
-            robot->step_count_x--;
-            return robot->horiz_direction;
-        }
-    }
-
 }
 
 int check_boundary(struct Robot *robot, int check_direction) {
 
-    int valid_move = -1;
+    int valid_move;
     valid_move = validate_move_location(robot, check_direction);
     if (valid_move != -1) {
         return 1;
@@ -215,19 +196,22 @@ int robot_traverse(struct Robot *robot) {
 
     int valid_move = -1, ret;
 
-    printf("TRAVIS scx %d, scy %d\n", robot->step_count_x, robot->step_count_y);
+    //printf("TRAVIS scx %d, scy %d\n", robot->step_count_x, robot->step_count_y);
     if (robot->step_count_x == 0 && robot->step_count_y == 0) {
         robot->step_count_x = 1;
         robot->step_count_y = 1;
     }
 
-    printf("WHICH H %d, V %d\n", robot->horiz_direction, robot->vert_direction);
+    //printf("WHICH H %d, V %d\n", robot->horiz_direction, robot->vert_direction);
     if(robot->step_count_x && check_boundary(robot, robot->horiz_direction)) {
         robot->step_count_x--;
         printf("RIGHT\n");
         if (robot->curr_state == ROBOT_REROUTING) {
             robot->curr_state = ROBOT_CALC_MH_DIST;
+        } else {
+            //printf("WHAT STATE %d\n", robot->curr_state);
         }
+            robot->curr_state = ROBOT_CALC_MH_DIST;
         return robot->horiz_direction;
     } else {
         robot->horiz_direction = robot->horiz_direction == robot->grid->RIGHT ?
@@ -238,14 +222,17 @@ int robot_traverse(struct Robot *robot) {
             if (robot->curr_state == ROBOT_REROUTING) {
                 robot->curr_state = ROBOT_CALC_MH_DIST;
             }
+            robot->curr_state = ROBOT_CALC_MH_DIST;
             return robot->horiz_direction;
         } else {
+            printf("trying UP\n");
             if (robot->step_count_y && check_boundary(robot, robot->vert_direction)) {
                 robot->step_count_y--;
                 printf("UP\n");
                 if (robot->curr_state == ROBOT_REROUTING) {
                     robot->curr_state = ROBOT_CALC_MH_DIST;
                 }
+                robot->curr_state = ROBOT_CALC_MH_DIST;
                 return robot->vert_direction;
             } else {
                 robot->vert_direction = robot->vert_direction == robot->grid->UP ?
@@ -256,84 +243,12 @@ int robot_traverse(struct Robot *robot) {
                     if (robot->curr_state == ROBOT_REROUTING) {
                         robot->curr_state = ROBOT_CALC_MH_DIST;
                     }
+                    robot->curr_state = ROBOT_CALC_MH_DIST;
                     return robot->vert_direction;
                 }
             }
         }
     }
-#if 0
-        valid_move = validate_move_location(robot, robot->horiz_direction);
-        if (valid_move != -1) {
-            robot->step_count_x--;
-            printf("TRAVERSE HORIZ %d, step_count_x %d\n", robot->horiz_direction, robot->step_count_x);
-            if (robot->curr_state == ROBOT_REROUTING) {
-                robot->curr_state = ROBOT_CALC_MH_DIST;
-            }
-            return robot->horiz_direction;
-        } else {
-            // reverse the horiz_direction
-            robot->horiz_direction = robot->horiz_direction == robot->grid->RIGHT ?
-              robot->grid->LEFT : robot->grid->RIGHT;
-            printf("DOes here?\n");
-            valid_move = validate_move_location(robot, robot->horiz_direction);
-            if (valid_move != -1) {
-                printf("Traverse candidate hori %d, vert %d\n", robot->horiz_direction, robot->vert_direction);
-                if (robot->curr_state == ROBOT_REROUTING) {
-                    robot->curr_state = ROBOT_CALC_MH_DIST;
-                }
-                robot->step_count_x--;
-                return robot->horiz_direction;
-            } else {
-            }
-        }
-    }
-
-    if (robot->step_count_y) {
-        valid_move = validate_move_location(robot, robot->vert_direction);
-        if (valid_move != -1) {
-            robot->step_count_y--;
-            printf("TRAVERSE VERT %d, step_count_y %d\n", robot->vert_direction, robot->step_count_y);
-            if (robot->curr_state == ROBOT_REROUTING) {
-                robot->curr_state = ROBOT_CALC_MH_DIST;
-            }
-            return robot->vert_direction;
-        } else {
-            // reverse the vert_direction
-            robot->vert_direction = robot->vert_direction == robot->grid->UP ?
-              robot->grid->DOWN : robot->grid->UP;
-            valid_move = validate_move_location(robot, robot->vert_direction);
-            if (valid_move != -1) {
-                robot->step_count_y--;
-                printf("2 Traverse candidate hori %d, vert %d\n", robot->horiz_direction, robot->vert_direction);
-                if (robot->curr_state == ROBOT_REROUTING) {
-                    robot->curr_state = ROBOT_CALC_MH_DIST;
-                }
-                return robot->vert_direction;
-            } else {
-                // Reached an edge
-                valid_move = validate_move_location(robot, robot->horiz_direction);
-                if (valid_move != -1) {
-                    if (robot->curr_state == ROBOT_REROUTING) {
-                        robot->curr_state = ROBOT_CALC_MH_DIST;
-                    }
-                    robot->step_count_y--;
-                    return robot->horiz_direction;
-                }
-            }
-        }
-    }
-#endif
-#if 0
-    if (robot->step_count_x == 0 && robot->step_count_y == 0) {
-        printf(" EVERYTHING 0\n");
-        robot->step_count_x = 1;
-        robot->step_count_y = 1;
-        robot->curr_state = ROBOT_CALC_MH_DIST;
-        robot_calc_mh_dist(robot);
-        ret = robot_traverse(robot);
-        return ret;
-    }
-#endif
 }
 
 /*
@@ -347,7 +262,7 @@ void robot_calc_mh_dist(struct Robot *robot) {
     int robot_goose_move_diff = 0;
     int diff_x, diff_y;
 
-    printf("HERE ********\n");
+    //printf("HERE ********\n");
     for (i = 0; i < robot->grid->num_geese; i++) {
         // Calculate robot's position to this goose visited move number
         robot_goose_move_diff = robot->count_move_no -
@@ -364,6 +279,7 @@ void robot_calc_mh_dist(struct Robot *robot) {
 
         if (robot_goose_move_diff + mh_dist > 10) {
             printf("Greater than 10 rgmd %d, mh_dist %d\n", robot_goose_move_diff, mh_dist);
+            printf("GOOSE X: %d, Y: %d\n", robot->goose_info[i].goose_x, robot->goose_info[i].goose_y);
             if (mh_dist < min) {
                 min = mh_dist;
                 // Save the Goose index and steps in
@@ -400,12 +316,17 @@ void robot_calc_mh_dist(struct Robot *robot) {
                 robot->vert_direction = (diff_y < 0) ?
                         robot->grid->UP: robot->grid->DOWN;
                 robot->step_count_y = abs(diff_y);
-            }    
+            }
             // No eggs live yet. Reroute robot till something
             // comes up.
             printf("Reroute robot till something: rgmd %d, moveno %d step %d, idx %d, alive in %d\n", robot_goose_move_diff, robot->count_move_no, robot->next_egg_alive_in, robot->next_egg_alive_index, robot->next_egg_alive_in);
+            printf("2. GO DIR %d, %d TO ROBOT %d, %d\n", robot->horiz_direction, robot->vert_direction, robot->step_count_x, robot->step_count_y);
+            printf("Robot location X: %d, Y: %d\n", robot->x, robot->y);
             robot->curr_state = ROBOT_REROUTING;
-            printf("ROBOT X: %d, Y: %d\n", robot->x, robot->y);
+            //printf("ROBOT X: %d, Y: %d\n", robot->x, robot->y);
+        } else {
+            robot->curr_state = ROBOT_CALC_MH_DIST;
+            printf("asdjfsfkljsdf\n");
         }
     }
 }
@@ -421,7 +342,7 @@ int robot_scan_grid(struct Robot *robot) {
         robot->step_count_x = robot->grid->rows;
         robot->step_count_y = robot->grid->cols;
         ret = robot_traverse(robot);
-        printf("ZERO ***\n");
+        //printf("ZERO ***\n");
         return ret;
     } else {
         if (geese_found_count == robot->grid->num_geese) {
@@ -430,18 +351,12 @@ int robot_scan_grid(struct Robot *robot) {
             * Manhattan Distance of the current location
             * to all Geese locations.
             */
+            printf("Found ALL :%d %d, ret %d, ROBOT X %d, Y %d\n", geese_found_count, robot->count_move_no, ret, robot->x, robot->y);
             robot->curr_state = ROBOT_CALC_MH_DIST;
             robot_calc_mh_dist(robot);
 
-    #if 0
-            if (robot->curr_state == ROBOT_TRAVERSE) {
-                ret = robot_traverse(robot);
-            } else if (robot->curr_state == ROBOT_REROUTING) {
-                ret = robot_reroute(robot);
-            }
-    #endif
             ret = robot_traverse(robot);
-            printf("Found ALL :%d %d, ret %d\n", geese_found_count, robot->count_move_no, ret);
+            printf("DIRECTION %d, %d, state %d\n", robot->horiz_direction, robot->vert_direction, robot->curr_state);
             return ret;
 
         } else {
@@ -497,27 +412,23 @@ int robot_move(struct Robot *robot) {
     switch (robot->curr_state) {
         case ROBOT_SCAN:
             ret = robot_scan_grid(robot);
-            printf("SCAN ret %d\n", ret);
+            //printf("SCAN ret %d\n", ret);
             break;
         case ROBOT_CALC_MH_DIST:
             robot_calc_mh_dist(robot);
-            ret = robot_traverse(robot);
-            printf("WHAT IS THIS ret %d\n", ret);
-            break;
-#if 0
+            //ret = robot_traverse(robot);
+            //printf("WHAT IS THIS ret %d\n", ret);
+            //break;
         case ROBOT_TRAVERSE:
-            if (step_count_x == 0 && step_count_y == 0) {
-                robot->curr_state = ROBOT_CALC_MH_DIST;
-                ret = -1;
-            } else {
-                ret = robot_traverse(robot);
-                printf ("XOOO %d\n", ret);
-            }
-            break;
         case ROBOT_REROUTING:
-            ret = robot_reroute(robot);
+            //robot_calc_mh_dist(robot);
+            ret = robot_traverse(robot);
+            robot->curr_state = ROBOT_CALC_MH_DIST;
+            //printf ("XOOO %d\n", ret);
             break;
-#endif
+        default:
+            printf("DEFAULT\n");
+            break;
     }
     return ret;
 }
@@ -541,14 +452,16 @@ void robot_got_egg(struct Robot *robot, int x, int y, int value) {
    robot->goose_info[geese_found_count].goose_y = y;
    robot->goose_info[geese_found_count].goose_quality = value;
    robot->goose_info[geese_found_count].goose_visited_no = robot->count_move_no;
+   geese_found_count++;
+#if 0
    printf("GOOSE #%d: x: %d, y: %d, quality: %d, visited_move: %d\n", geese_found_count+1,
         robot->goose_info[geese_found_count].goose_x,
         robot->goose_info[geese_found_count].goose_y,
         robot->goose_info[geese_found_count].goose_quality,
         robot->goose_info[geese_found_count].goose_visited_no);
-   geese_found_count++;
    printf("%d, %d: [%d]\n",
             x, y, value);
+#endif
 }
 
 /***************************************************************
