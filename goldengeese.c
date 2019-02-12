@@ -85,6 +85,7 @@ enum RobotMode {
     ROBOT_CALC_MH_DIST,
     ROBOT_TRAVERSE,
     ROBOT_REROUTING,
+    ROBOT_ALL_FILLED,
 };
 
 struct Robot {
@@ -333,6 +334,27 @@ void robot_calc_mh_dist(struct Robot *robot) {
     }
 }
 
+int robot_all_filled(struct Robot *robot) {
+
+    int valid_move = -1;
+    //printf("ROBOT ALL FILLED: X: %d, Y: %d, H %d, V %d\n", robot->x, robot->y, robot->horiz_direction, robot->vert_direction);
+    valid_move = validate_move_location(robot, robot->vert_direction);
+    if (valid_move != -1) {
+        // continue moving in the current vert_direction
+        return robot->vert_direction;
+    } else {
+        // we have reached an edge.
+        // reverse the vert_direction
+        robot->vert_direction = robot->vert_direction == robot->grid->UP ?
+          robot->grid->DOWN : robot->grid->UP;
+
+        // go LEFT one step
+        valid_move = validate_move_location(robot, robot->horiz_direction);
+        if (valid_move != -1) {
+            return robot->horiz_direction;
+        }
+    }
+}
 int robot_scan_grid(struct Robot *robot) {
     /* 
      * This function scans the entire grid
@@ -353,12 +375,20 @@ int robot_scan_grid(struct Robot *robot) {
             * Manhattan Distance of the current location
             * to all Geese locations.
             */
-            //printf("Found ALL :%d %d, ret %d, ROBOT X %d, Y %d\n", geese_found_count, robot->count_move_no, ret, robot->x, robot->y);
-            robot->curr_state = ROBOT_CALC_MH_DIST;
-            robot_calc_mh_dist(robot);
+	    if (robot->grid->num_geese == robot->grid->rows * robot->grid->cols) {
+		robot->curr_state = ROBOT_ALL_FILLED;
+		// Change direction
+		robot->vert_direction = robot->grid->DOWN;
+		robot->horiz_direction = robot->grid->LEFT;
+		ret = robot_all_filled(robot);
+	    } else {
+		    //printf("Found ALL :%d %d, ret %d, ROBOT X %d, Y %d\n", geese_found_count, robot->count_move_no, ret, robot->x, robot->y);
+		    robot->curr_state = ROBOT_CALC_MH_DIST;
+		    robot_calc_mh_dist(robot);
 
-            ret = robot_traverse(robot);
-            //printf("DIRECTION %d, %d, state %d\n", robot->horiz_direction, robot->vert_direction, robot->curr_state);
+		    ret = robot_traverse(robot);
+		    //printf("DIRECTION %d, %d, state %d\n", robot->horiz_direction, robot->vert_direction, robot->curr_state);
+	    }
             return ret;
 
         } else {
@@ -366,7 +396,8 @@ int robot_scan_grid(struct Robot *robot) {
              * then one step UP, then reverse direction,
              * go LEFT till reached edge, go UP, reverse direction
              * and so on till we complete MN moves
-             */  
+             */	
+	    //printf("ROBOT: X: %d, Y: %d, H %d, V %d\n", robot->x, robot->y, robot->horiz_direction, robot->vert_direction);
             valid_move = validate_move_location(robot, robot->horiz_direction);
             if (valid_move != -1) {
                 // continue moving in the current horiz_direction
@@ -412,6 +443,9 @@ int robot_move(struct Robot *robot) {
    */
     int ret, index;
     switch (robot->curr_state) {
+	case ROBOT_ALL_FILLED:
+	    ret = robot_all_filled(robot);
+	    break;
         case ROBOT_SCAN:
             ret = robot_scan_grid(robot);
             //printf("SCAN ret %d\n", ret);
