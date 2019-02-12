@@ -1,10 +1,9 @@
 Your solution is correct. Solution quality is Satisfactory. Feedback for your solution:
 
-Your score is 69. There were errors in these tests:
+Your score is 66. There were errors in these tests:
 
-Large 99x99 grid 0th column 9s rest 1s
-Large 98x98 grid 0th row 9s rest 1s
+Large 300x200 grid all ones
 Error details:
 
-Program crashed (2 tests)
+Program Timed Out (took too long to execute) (1 tests)
 You must score above 75 to get to the next level
