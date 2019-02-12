@@ -1,9 +1,9 @@
-Your solution is correct. Solution quality is Satisfactory. Feedback for your solution:
+Your solution is correct. Solution quality is Above_Average. Feedback for your solution:
 
-Your score is 66. There were errors in these tests:
+Your score is 80. Your performance can be improved in these tests:
 
-Large 300x200 grid all ones
-Error details:
-
-Program Timed Out (took too long to execute) (1 tests)
-You must score above 75 to get to the next level
+Large 99x99 grid 0th column 9s rest 1s
+Large 98x98 grid 0th row 9s rest 1s
+2x20 grid with single goose at end
+20x20 grid with single goose in the middle
+With effort a score above 85 is possible
