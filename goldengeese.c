@@ -280,57 +280,59 @@ void robot_calc_mh_dist(struct Robot *robot) {
         // Calculate manhattan distance from robot to this goose
         mh_dist = abs(diff_x) + abs(diff_y);
 
-        if (robot_goose_move_diff + mh_dist > 10) {
-            //printf("Greater than 10 rgmd %d, mh_dist %d\n", robot_goose_move_diff, mh_dist);
-            //printf("GOOSE X: %d, Y: %d\n", robot->goose_info[i].goose_x, robot->goose_info[i].goose_y);
-            if (mh_dist < min) {
-                min = mh_dist;
-                // Save the Goose index and steps in
-                // x and y direction to go to for later traversal
-                robot->target_egg_index = i;
+	if (mh_dist != 0) {
+		if (robot_goose_move_diff + mh_dist > 10) {
+		    //printf("Greater than 10 rgmd %d, mh_dist %d\n", robot_goose_move_diff, mh_dist);
+		    //printf("GOOSE X: %d, Y: %d\n", robot->goose_info[i].goose_x, robot->goose_info[i].goose_y);
+		    if (mh_dist < min) {
+			min = mh_dist;
+			// Save the Goose index and steps in
+			// x and y direction to go to for later traversal
+			robot->target_egg_index = i;
 
-                robot->horiz_direction = (diff_x < 0) ?
-                        robot->grid->RIGHT : robot->grid->LEFT;
-                robot->step_count_x = abs(diff_x);
+			robot->horiz_direction = (diff_x < 0) ?
+				robot->grid->RIGHT : robot->grid->LEFT;
+			robot->step_count_x = abs(diff_x);
 
-                robot->vert_direction = (diff_y < 0) ?
-                        robot->grid->UP: robot->grid->DOWN;
-                robot->step_count_y = abs(diff_y);
+			robot->vert_direction = (diff_y < 0) ?
+				robot->grid->UP: robot->grid->DOWN;
+			robot->step_count_y = abs(diff_y);
 
-                // Found egg to move to.
-                // Traverse robot to that location
-                robot->curr_state = ROBOT_TRAVERSE;
-            }
-        } else if (robot_goose_move_diff + mh_dist <= 10) {
-            // This goose will lay egg in how much steps?
-            // Save the lowest lay egg count and reach there
-            // immediately when it arrives.
-            // This is the case when all eggs are reset.
-            lay_egg_dist = 10 - robot_goose_move_diff;
-            if (lay_egg_dist < lay_egg_timer) {
-                lay_egg_timer = lay_egg_dist;
-                robot->next_egg_alive_index = i;
-                robot->next_egg_alive_in = lay_egg_timer;
+			// Found egg to move to.
+			// Traverse robot to that location
+			robot->curr_state = ROBOT_TRAVERSE;
+		    }
+		} else if (robot_goose_move_diff + mh_dist <= 10) {
+		    // This goose will lay egg in how much steps?
+		    // Save the lowest lay egg count and reach there
+		    // immediately when it arrives.
+		    // This is the case when all eggs are reset.
+		    lay_egg_dist = 10 - robot_goose_move_diff;
+		    if (lay_egg_dist < lay_egg_timer) {
+			lay_egg_timer = lay_egg_dist;
+			robot->next_egg_alive_index = i;
+			robot->next_egg_alive_in = lay_egg_timer;
 
-                robot->horiz_direction = (diff_x < 0) ?
-                        robot->grid->RIGHT : robot->grid->LEFT;
-                robot->step_count_x = abs(diff_x);
+			robot->horiz_direction = (diff_x < 0) ?
+				robot->grid->RIGHT : robot->grid->LEFT;
+			robot->step_count_x = abs(diff_x);
 
-                robot->vert_direction = (diff_y < 0) ?
-                        robot->grid->UP: robot->grid->DOWN;
-                robot->step_count_y = abs(diff_y);
-            }
-            // No eggs live yet. Reroute robot till something
-            // comes up.
-            //printf("Reroute robot till something: rgmd %d, moveno %d step %d, idx %d, alive in %d\n", robot_goose_move_diff, robot->count_move_no, robot->next_egg_alive_in, robot->next_egg_alive_index, robot->next_egg_alive_in);
-            //printf("2. GO DIR %d, %d TO ROBOT %d, %d\n", robot->horiz_direction, robot->vert_direction, robot->step_count_x, robot->step_count_y);
-            //printf("Robot location X: %d, Y: %d\n", robot->x, robot->y);
-            robot->curr_state = ROBOT_REROUTING;
-            //printf("ROBOT X: %d, Y: %d\n", robot->x, robot->y);
-        } else {
-            robot->curr_state = ROBOT_CALC_MH_DIST;
-            //printf("asdjfsfkljsdf\n");
-        }
+			robot->vert_direction = (diff_y < 0) ?
+				robot->grid->UP: robot->grid->DOWN;
+			robot->step_count_y = abs(diff_y);
+		    }
+		    // No eggs live yet. Reroute robot till something
+		    // comes up.
+		    //printf("Reroute robot till something: rgmd %d, moveno %d step %d, idx %d, alive in %d\n", robot_goose_move_diff, robot->count_move_no, robot->next_egg_alive_in, robot->next_egg_alive_index, robot->next_egg_alive_in);
+		    //printf("2. GO DIR %d, %d TO ROBOT %d, %d\n", robot->horiz_direction, robot->vert_direction, robot->step_count_x, robot->step_count_y);
+		    //printf("Robot location X: %d, Y: %d\n", robot->x, robot->y);
+		    robot->curr_state = ROBOT_REROUTING;
+		    //printf("ROBOT X: %d, Y: %d\n", robot->x, robot->y);
+		} else {
+		    robot->curr_state = ROBOT_CALC_MH_DIST;
+		    //printf("asdjfsfkljsdf\n");
+		}
+	}
     }
 }
 
