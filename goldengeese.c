@@ -3,6 +3,8 @@
 #include <string.h>
 
 int geese_found_count = 0;
+int zeroth_row_egg_sum = 0;
+int zeroth_col_egg_sum = 0;
 /************************************************************
 
 For this contest, you have to modify the code of the robot_xxx functions
@@ -96,6 +98,11 @@ struct Robot {
   int vert_direction;
   int count_move_no;
   enum RobotMode curr_state;
+#define ZEROTH_ROW_FILLED 0x1
+#define ZEROTH_COL_FILLED 0x2
+  int filled_pattern;
+  int traverse_row;
+  int traverse_col;
   struct Goose *goose_info;
   int target_egg_index;
   int next_egg_alive_index;
@@ -131,6 +138,8 @@ void robot_initialize(struct Robot *robot, struct Grid *grid) {
   robot->next_egg_alive_in = 0;
   robot->step_count_x = 0;
   robot->step_count_y = 0;
+  robot->traverse_row = 0;
+  robot->traverse_col = 0;
 }
 
 int get_diff_x(int curr_x, int goose_x) {
@@ -336,9 +345,69 @@ void robot_calc_mh_dist(struct Robot *robot) {
     }
 }
 
+void analyze_grid_pattern(struct Robot *robot) {
+	int i, j;
+
+	for (i = 0; i < robot->grid->rows; i++) {
+		zeroth_row_egg_sum += robot->goose_info[i].goose_quality;
+	}
+	for (j = 0; j < robot->grid->num_geese; j++) {
+		if (robot->goose_info[j].goose_x == 0) {
+			zeroth_col_egg_sum += robot->goose_info[j].goose_quality;
+			//printf("COL %d, X %d, Y %d, quality %d\n", j, robot->goose_info[j].goose_x, robot->goose_info[j].goose_y, robot->goose_info[j].goose_quality);
+		}
+	}
+	//printf("PRINTING ROW SUM %d. COL SUM %d\n", zeroth_row_egg_sum, zeroth_col_egg_sum);
+	if (zeroth_row_egg_sum > 2 * robot->grid->rows) {
+	    robot->filled_pattern = ZEROTH_ROW_FILLED;
+	}
+	if (zeroth_col_egg_sum > 2 * robot->grid->cols) {
+	    robot->filled_pattern |= ZEROTH_COL_FILLED;
+	}
+
+}
 int robot_all_filled(struct Robot *robot) {
 
     int valid_move = -1;
+
+    if (robot->traverse_row == 1) {
+            valid_move = validate_move_location(robot, robot->horiz_direction);
+            if (valid_move != -1) {
+                // continue moving in the current horiz_direction
+                return robot->horiz_direction;
+            } else {
+                // we have reached an edge.
+                // reverse the horiz_direction
+                robot->horiz_direction = robot->horiz_direction == robot->grid->RIGHT ?
+                  robot->grid->LEFT : robot->grid->RIGHT;
+		valid_move = validate_move_location(robot, robot->horiz_direction);
+		if (valid_move != -1) {
+			// continue moving in the current horiz_direction
+			return robot->horiz_direction;
+		}
+	     }
+    }
+		
+
+    if (robot->filled_pattern & ZEROTH_ROW_FILLED) {
+	    valid_move = validate_move_location(robot, robot->vert_direction);
+	    if (valid_move != -1) {
+		// continue moving in the current vert_direction
+		return robot->vert_direction;
+	    } else {
+		// we have reached an edge.
+		// reverse the vert_direction
+		robot->vert_direction = robot->vert_direction == robot->grid->UP ?
+		  robot->grid->DOWN : robot->grid->UP;
+		// go LEFT one step
+		valid_move = validate_move_location(robot, robot->horiz_direction);
+		if (valid_move != -1) {
+			robot->traverse_row = 1;
+			return robot->horiz_direction;
+	       }
+	    }
+    }
+
     //printf("ROBOT ALL FILLED: X: %d, Y: %d, H %d, V %d\n", robot->x, robot->y, robot->horiz_direction, robot->vert_direction);
     valid_move = validate_move_location(robot, robot->vert_direction);
     if (valid_move != -1) {
@@ -382,6 +451,7 @@ int robot_scan_grid(struct Robot *robot) {
 		// Change direction
 		robot->vert_direction = robot->grid->DOWN;
 		robot->horiz_direction = robot->grid->LEFT;
+                analyze_grid_pattern(robot);
 		ret = robot_all_filled(robot);
 	    } else {
 		    //printf("Found ALL :%d %d, ret %d, ROBOT X %d, Y %d\n", geese_found_count, robot->count_move_no, ret, robot->x, robot->y);
