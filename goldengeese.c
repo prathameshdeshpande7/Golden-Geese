@@ -387,6 +387,23 @@ int robot_all_filled(struct Robot *robot) {
 		}
 	     }
     }
+    if (robot->traverse_col == 1) {
+            valid_move = validate_move_location(robot, robot->vert_direction);
+            if (valid_move != -1) {
+                // continue moving in the current vert_direction
+                return robot->vert_direction;
+            } else {
+                // we have reached an edge.
+                // reverse the vert_direction
+                robot->vert_direction = robot->vert_direction == robot->grid->DOWN ?
+                  robot->grid->UP : robot->grid->DOWN;
+		valid_move = validate_move_location(robot, robot->vert_direction);
+		if (valid_move != -1) {
+			// continue moving in the current vert_direction
+			return robot->vert_direction;
+		}
+	     }
+    }
 		
 
     if (robot->filled_pattern & ZEROTH_ROW_FILLED) {
@@ -404,6 +421,24 @@ int robot_all_filled(struct Robot *robot) {
 		if (valid_move != -1) {
 			robot->traverse_row = 1;
 			return robot->horiz_direction;
+	       }
+	    }
+    }
+    if (robot->filled_pattern & ZEROTH_COL_FILLED) {
+	    valid_move = validate_move_location(robot, robot->horiz_direction);
+	    if (valid_move != -1) {
+		// continue moving in the current horiz_direction
+		return robot->horiz_direction;
+	    } else {
+		// we have reached an edge.
+		// reverse the horiz_direction
+		robot->horiz_direction = robot->horiz_direction == robot->grid->RIGHT ?
+		  robot->grid->LEFT : robot->grid->RIGHT;
+		// go DOWN one step
+		valid_move = validate_move_location(robot, robot->vert_direction);
+		if (valid_move != -1) {
+			robot->traverse_col = 1;
+			return robot->vert_direction;
 	       }
 	    }
     }
